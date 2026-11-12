@@ -253,7 +253,7 @@ function renderScans() {
   lastRendered = key;
   const box = $("scans");
   if (!state.scenes.length) {
-    box.replaceChildren(el("div", { class: "empty", text: "No scans yet. Choose a video on the left to make your first one." }));
+    box.replaceChildren(el("div", { class: "empty", text: "No scans yet. Choose a video to make your first one." }));
     return;
   }
   box.replaceChildren(...state.scenes.map(card));

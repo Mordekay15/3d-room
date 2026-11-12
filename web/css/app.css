@@ -180,7 +180,7 @@ body.viewer { overflow: hidden; background: #070f1f; touch-action: none; user-se
 
 .minimap {
   position: fixed; top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left));
-  width: clamp(150px, 22vw, 290px); aspect-ratio: 1 / 1;
+  width: clamp(124px, min(22vw, 36vh), 290px); aspect-ratio: 1 / 1;
   background: rgba(16, 44, 92, .86); border: 1px solid rgba(222, 233, 255, .55); border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, .35); overflow: hidden; backdrop-filter: blur(6px);
 }

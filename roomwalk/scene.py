@@ -69,6 +69,7 @@ def publish_scan(scene_dir: Path, meta: dict, splat_path: Path | None, version: 
     model = poses.load_model(scene_dir / "dataset" / "sparse" / "0")
     cam_height = float(meta.get("camera_height", config.DEFAULT_CAMERA_HEIGHT))
 
+    splats = None
     if splat_path is None:
         pts, weights, rgb = model["xyz"], np.ones(len(model["xyz"])), model["rgb"]
         dense = False
@@ -81,6 +82,7 @@ def publish_scan(scene_dir: Path, meta: dict, splat_path: Path | None, version: 
         if len(pts) < 2000:  # training barely started: fall back to tracking points
             pts, weights, rgb = model["xyz"], np.ones(len(model["xyz"])), model["rgb"]
             dense = False
+            splats = None
 
     solve_pts = pts if len(pts) <= 400_000 else pts[:: len(pts) // 400_000]
     fit = align.solve_alignment(np.asarray(solve_pts, np.float64), model["centers"],
@@ -95,7 +97,11 @@ def publish_scan(scene_dir: Path, meta: dict, splat_path: Path | None, version: 
         ply.write_splats(splat_path, model["xyz"], model["rgb"], np.full((1, 3), size), opacity=0.9)
         count = len(model["xyz"])
 
-    map_info = align.build_maps(align.apply(M, np.asarray(pts, np.float64)), weights, rgb,
+    if dense and splats is not None and "sizes" in splats:
+        # fill each splat's whole extent, so plain walls are solid on the map
+        pts, weights, rgb = ply.spread(pts, weights, rgb, splats["sizes"][solid],
+                                       splats["quats"][solid], align.CELL / fit["scale"])
+    map_info = align.build_maps(align.apply(M, np.asarray(pts, np.float32)), weights, rgb,
                                 path_xz, scene_dir, dense=dense)
     return _write_scene(scene_dir, meta, splat_path.name, version, count, M, fit["scale"],
                         map_info, path, quality,
@@ -113,7 +119,11 @@ def publish_import(scene_dir: Path, meta: dict, splat_path: Path) -> dict:
     solve_pts = pts if len(pts) <= 400_000 else pts[:: len(pts) // 400_000]
     fit = align.solve_alignment(solve_pts, None, None, 0.0, up_hint=np.array(up))
     M = fit["matrix"]
-    map_info = align.build_maps(align.apply(M, pts), splats["opacity"][solid], splats["rgb"][solid],
+    weights, rgb = splats["opacity"][solid], splats["rgb"][solid]
+    if "sizes" in splats:
+        pts, weights, rgb = ply.spread(pts, weights, rgb, splats["sizes"][solid],
+                                       splats["quats"][solid], align.CELL / fit["scale"])
+    map_info = align.build_maps(align.apply(M, np.asarray(pts, np.float32)), weights, rgb,
                                 None, scene_dir, dense=True)
     return _write_scene(scene_dir, meta, splat_path.name, int(time.time()), splats["count"], M,
                         fit["scale"], map_info, None, "final")

@@ -83,12 +83,53 @@ def read_splats(path: Path, max_points: int | None = None):
     else:
         rgb = np.full((len(view), 3), 0.7, np.float32)
     ok = np.isfinite(xyz).all(axis=1)
-    return {
+    out = {
         "xyz": xyz[ok],
         "opacity": opacity[ok],
         "rgb": np.clip(rgb[ok], 0.0, 1.0),
         "count": count,
     }
+    if "scale_0" in names and "rot_0" in names:
+        with np.errstate(over="ignore"):
+            sizes = np.exp(np.stack([view["scale_0"], view["scale_1"], view["scale_2"]],
+                                    axis=1).astype(np.float32))
+        quats = np.stack([view["rot_0"], view["rot_1"], view["rot_2"], view["rot_3"]],
+                         axis=1).astype(np.float32)
+        out["sizes"] = np.nan_to_num(sizes[ok], nan=0.0, posinf=0.0)
+        out["quats"] = quats[ok]
+    return out
+
+
+def spread(xyz, weights, rgb, sizes, quats, cell: float, max_points: int = 6_000_000,
+           seed: int = 0):
+    """Turn splats into a point cloud that covers their whole extent.
+
+    A plain wall is often just a handful of metre-wide splats, so their centres
+    alone would leave the wall full of holes on a map. Each splat is replaced
+    by several points scattered inside it - more for bigger splats - so
+    surfaces come out solid. `cell` is the map cell size in the splats' units.
+    Returns (points, weights, rgb).
+    """
+    xyz = np.asarray(xyz, np.float32)
+    sizes = np.minimum(np.asarray(sizes, np.float32), 15.0 * cell)  # ignore absurdly big blobs
+    reach = sizes.max(axis=1)
+    n = np.clip(np.ceil(reach * 3.0 / cell * 4.0), 1, 160).astype(np.int64)
+    total = int(n.sum())
+    if total > max_points:
+        n = np.maximum(1, (n * (max_points / total)).astype(np.int64))
+    idx = np.repeat(np.arange(len(xyz)), n)
+    rng = np.random.default_rng(seed)
+    local = np.clip(rng.standard_normal((len(idx), 3)).astype(np.float32), -1.5, 1.5) * sizes[idx]
+    q = np.asarray(quats, np.float32)
+    q = q / np.maximum(np.linalg.norm(q, axis=1, keepdims=True), 1e-9)
+    w, x, y, z = (q[idx, k] for k in range(4))
+    lx, ly, lz = local[:, 0], local[:, 1], local[:, 2]
+    # rotate each offset by its splat's quaternion
+    ox = (1 - 2 * (y * y + z * z)) * lx + 2 * (x * y - w * z) * ly + 2 * (x * z + w * y) * lz
+    oy = 2 * (x * y + w * z) * lx + (1 - 2 * (x * x + z * z)) * ly + 2 * (y * z - w * x) * lz
+    oz = 2 * (x * z - w * y) * lx + 2 * (y * z + w * x) * ly + (1 - 2 * (x * x + y * y)) * lz
+    points = xyz[idx] + np.stack([ox, oy, oz], axis=1)
+    return points, np.asarray(weights, np.float32)[idx], np.asarray(rgb, np.float32)[idx]
 
 
 def write_splats(path: Path, xyz, rgb, scales, quats=None, opacity=0.95) -> None:
