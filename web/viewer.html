@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Roomwalk</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2313315f'/%3E%3Cpath d='M7 25V7h18v18h-8' fill='none' stroke='%23dee9ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23ffb43a'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/app.css">
+<script type="importmap">
+{ "imports": {
+    "three": "/vendor/three.module.js",
+    "three/addons/": "/vendor/addons/",
+    "@sparkjsdev/spark": "/vendor/spark.module.js"
+} }
+</script>
+</head>
+<body class="viewer">
+<canvas id="view" tabindex="0" aria-label="3D view of the room"></canvas>
+
+<section id="minimap" class="minimap" aria-label="Floor plan">
+  <canvas id="mapCanvas"></canvas>
+  <div class="minimap-tools">
+    <button id="mapMode" type="button" title="Switch between drawn plan and top-down photo">Photo</button>
+    <button id="mapSize" type="button" title="Make the map bigger or smaller (M)">Enlarge</button>
+  </div>
+</section>
+
+<nav class="viewer-bar" aria-label="Viewer controls">
+  <a class="bar-btn" href="/" title="Back to your scans">Scans</a>
+  <button class="bar-btn" id="tourBtn" type="button" title="Play back the path the video was filmed along (T)">Play tour</button>
+  <button class="bar-btn" id="settingsBtn" type="button" aria-expanded="false" aria-controls="settings">Settings</button>
+  <button class="bar-btn" id="fullBtn" type="button">Full screen</button>
+</nav>
+
+<aside id="settings" class="settings" hidden>
+  <h2>Settings</h2>
+  <label>Eye height <output id="eyeOut"></output>
+    <input id="eye" type="range" min="0.8" max="2.1" step="0.02">
+  </label>
+  <label>Walking speed <output id="speedOut"></output>
+    <input id="speed" type="range" min="0.5" max="3" step="0.1" value="1.4">
+  </label>
+  <label>Field of view <output id="fovOut"></output>
+    <input id="fov" type="range" min="45" max="100" step="1" value="62">
+  </label>
+  <label>Picture sharpness
+    <select id="quality">
+      <option value="auto">Automatic (keeps movement smooth)</option>
+      <option value="0.6">Fast</option>
+      <option value="1">Balanced</option>
+      <option value="2">Sharpest</option>
+    </select>
+  </label>
+  <label class="check"><input id="walls" type="checkbox"> Walls and furniture block me</label>
+  <label class="check"><input id="fly" type="checkbox"> Fly freely (E up, Q down)</label>
+  <div id="upRow" hidden>
+    <p class="settings-note">Room upside down or on its side? Pick which direction is up in this file.</p>
+    <div class="seg" id="upChoices">
+      <button type="button" data-up="-y">−Y</button><button type="button" data-up="+y">+Y</button>
+      <button type="button" data-up="+z">+Z</button><button type="button" data-up="-z">−Z</button>
+    </div>
+  </div>
+  <p class="settings-note" id="sceneFacts"></p>
+</aside>
+
+<div id="notice" class="notice" hidden></div>
+
+<div id="hint" class="hint" hidden></div>
+
+<div id="stick" class="stick" hidden><i></i></div>
+
+<div id="loading" class="loading">
+  <div class="loading-box">
+    <p id="loadingName" class="loading-name">Opening your room</p>
+    <div class="meter"><i id="loadingBar"></i></div>
+    <p id="loadingText" class="loading-text">Loading the scan</p>
+  </div>
+</div>
+
+<script type="module" src="/js/viewer.js"></script>
+</body>
+</html>

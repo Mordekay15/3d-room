@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roomwalk</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2313315f'/%3E%3Cpath d='M7 25V7h18v18h-8' fill='none' stroke='%23dee9ff' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23ffb43a'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body class="home">
+<div class="sheet">
+  <header class="masthead">
+    <h1>Roomwalk</h1>
+    <p>Film a room with your phone. Walk around inside it on your screen.</p>
+  </header>
+
+  <div class="columns">
+    <div>
+      <section class="room" id="dropzone" aria-labelledby="newScanTitle">
+        <div class="dimension">one room, one continuous video</div>
+        <h2 id="newScanTitle">Scan a room</h2>
+        <p id="dropHelp">Drop a video here, or choose one from your computer.</p>
+
+        <form id="scanForm">
+          <div class="pick">
+            <label class="btn" for="videoFile">Choose a video</label>
+            <input id="videoFile" type="file" accept="video/*,.mp4,.mov,.m4v,.mkv,.avi,.webm" hidden>
+            <span class="file-name" id="fileName"></span>
+          </div>
+
+          <div id="scanOptions" hidden>
+            <label class="field"><span>Name of the room</span>
+              <input id="scanName" type="text" maxlength="80" autocomplete="off">
+            </label>
+            <div class="field"><span>Quality</span>
+              <div class="choices" id="presetChoices"></div>
+            </div>
+            <label class="field"><span>How high did you hold the phone? (sets the room's real size)</span>
+              <select id="camHeight">
+                <option value="1.15">Waist height, about 1.15 m</option>
+                <option value="1.4" selected>Chest height, about 1.4 m</option>
+                <option value="1.6">Eye level, about 1.6 m</option>
+              </select>
+            </label>
+            <div class="actions">
+              <button class="btn primary" id="startBtn" type="submit">Start the scan</button>
+              <button class="btn quiet" id="clearBtn" type="button">Choose a different video</button>
+            </div>
+          </div>
+          <div class="upload-state" id="uploadState" hidden>
+            <div class="meter"><i id="uploadBar"></i></div>
+            <p id="uploadText">Copying the video into the app</p>
+          </div>
+          <p class="form-error" id="formError" hidden></p>
+        </form>
+
+        <p class="fine" id="engineNote" hidden>The first scan downloads the free 3D engine (Brush, about 160 MB) once. You need to be online for that.</p>
+        <p class="fine">Already have a splat file from another app?
+          <label for="plyFile"><a role="button" tabindex="0" id="importLink">Import a .ply file</a></label>
+          <input id="plyFile" type="file" accept=".ply" hidden>
+        </p>
+        <span class="door" aria-hidden="true"></span>
+      </section>
+
+      <section class="tips" aria-labelledby="tipsTitle">
+        <h2 id="tipsTitle">Filming a room that scans well</h2>
+        <ul>
+          <li><b>Walk, don't spin.</b> The app works out depth from the camera changing position. Turning on the spot gives it nothing, and is the most common reason a scan fails.</li>
+          <li><b>Go slowly, for 45 to 90 seconds.</b> Circle the room facing inwards, then once more facing the walls. Fast moves blur the picture.</li>
+          <li><b>Turn every light on.</b> Dark corners come out as fog.</li>
+          <li><b>Hold the phone sideways at chest height,</b> and tilt it up and down now and then so floor and ceiling get seen.</li>
+          <li><b>Nothing should move.</b> No people, pets or a TV playing.</li>
+          <li><b>Mirrors, windows and bare white walls are hard.</b> They still appear, but expect them to look soft or odd.</li>
+        </ul>
+      </section>
+    </div>
+
+    <section aria-labelledby="scansTitle">
+      <h2 id="scansTitle">Your scans</h2>
+      <div class="scans" id="scans" aria-live="polite"></div>
+    </section>
+  </div>
+
+  <footer class="colophon">
+    Everything runs on this computer; your videos are not sent anywhere.
+    Built on COLMAP (camera tracking), Brush (3D training) and Spark (display), all open source.
+    <span id="version"></span>
+  </footer>
+</div>
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
